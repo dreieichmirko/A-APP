@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Anrufliste</title>
+<style>
+:root{
+  --bg:#f4f6f9; --card:#ffffff; --text:#1b2430; --muted:#66707d; --line:#dde2e9;
+  --brand:#1f4e78; --brand-text:#ffffff; --accent:#0a7d4f; --warn:#b45309; --bad:#b42318;
+  --chip:#e8eef5; --input:#ffffff;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10151c; --card:#1a222c; --text:#e8edf3; --muted:#9aa6b4; --line:#2c3743;
+    --brand:#5b9bd5; --brand-text:#08131f; --accent:#46c08a; --warn:#f0b35a; --bad:#ff8a80;
+    --chip:#243040; --input:#141b24;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10151c; --card:#1a222c; --text:#e8edf3; --muted:#9aa6b4; --line:#2c3743;
+  --brand:#5b9bd5; --brand-text:#08131f; --accent:#46c08a; --warn:#f0b35a; --bad:#ff8a80;
+  --chip:#243040; --input:#141b24;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+button,input,textarea{font:inherit;color:inherit}
+.wrap{max-width:720px;margin:0 auto;padding:14px 14px 90px}
+header.top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+header.top h1{font-size:20px;margin:0;flex:1}
+.sub{color:var(--muted);font-size:13px}
+.btn{border:0;border-radius:12px;padding:11px 14px;background:var(--chip);cursor:pointer;font-weight:600}
+.btn.primary{background:var(--brand);color:var(--brand-text)}
+.btn.call{background:var(--accent);color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn.small{padding:7px 10px;font-size:14px;border-radius:10px}
+.btn[disabled]{opacity:.5}
+input[type=text],input[type=tel],input[type=search],textarea{width:100%;border:1px solid var(--line);background:var(--input);border-radius:12px;padding:11px 12px;outline:none}
+textarea{min-height:110px;resize:vertical}
+input:focus,textarea:focus{border-color:var(--brand)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;white-space:nowrap;cursor:pointer;font-size:14px}
+.chip.on{background:var(--brand);color:var(--brand-text);border-color:var(--brand)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.name{font-weight:700;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:13px}
+.snip{color:var(--muted);font-size:13px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.badge{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--chip);white-space:nowrap}
+.badge.interesse,.badge.termin{color:var(--accent)}
+.badge.rueckruf{color:var(--warn)}
+.badge.kein{color:var(--bad)}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.sheet{position:fixed;inset:0;background:var(--bg);overflow-y:auto;z-index:10;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet .wrap{padding-top:10px}
+label.l{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:14px 0 6px}
+.note{border-left:3px solid var(--brand);padding:6px 0 6px 10px;margin:10px 0}
+.note .t{font-size:12px;color:var(--muted)}
+.note .einwand{margin-top:4px;padding:6px 8px;border-radius:8px;background:var(--chip);font-size:14px}
+.ai{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px;font-size:15px}
+.hint{font-size:13px;color:var(--muted);margin-top:6px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:30;max-width:90%}
+.dict{display:flex;gap:10px;align-items:flex-start}
+.mic{flex:none;width:56px;height:56px;border-radius:50%;border:0;background:var(--brand);color:var(--brand-text);font-size:24px;cursor:pointer;line-height:1}
+.mic.rec{background:var(--bad);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(180,35,24,.5)}100%{box-shadow:0 0 0 16px rgba(180,35,24,0)}}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.25);border-radius:999px;padding:14px 18px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+  "use strict";
+  const ERGEBNISSE = [
+    {k:"nicht-erreicht", t:"Nicht erreicht", cls:""},
+    {k:"rueckruf", t:"Rückruf", cls:"rueckruf"},
+    {k:"interesse", t:"Interesse", cls:"interesse"},
+    {k:"termin", t:"Termin", cls:"termin"},
+    {k:"kein", t:"Kein Interesse", cls:"kein"}
+  ];
+  const ERG = Object.fromEntries(ERGEBNISSE.map(e=>[e.k,e]));
+  const DEFAULT_ANGEBOT = "HolDeinePlakette.de – HU-Service (KÜS-Prüfpartner, Raum Frankfurt) und Empfehlungsflyer";
+
+  const state = {
+    uid:null, col:null, customers:[], angebot:DEFAULT_ANGEBOT,
+    search:"", filter:"alle", openId:null, ready:false, error:"",
+    db:null, sample:null, downloads:null, busy:false, addOpen:false,
+    draft:{result:"", text:"", einwand:""}, ai:{id:null,text:"",loading:false,error:""}, aiAll:{text:"",loading:false,error:""}, showAll:false,
+    form:{name:"",ansprechpartner:"",kunde:"",phone:"",adresse:"",ort:""}, imgLimits:null, importing:false, importErr:"", candidates:null, settingsOpen:false
+  };
+
+  const app = document.getElementById("app");
+
+  function h(tag, attrs, ...kids){
+    const e = document.createElement(tag);
+    if(attrs) for(const [k,v] of Object.entries(attrs)){
+      if(v==null||v===false) continue;
+      if(k==="class") e.className=v;
+      else if(k.startsWith("on")) e.addEventListener(k.slice(2).toLowerCase(), v);
+      else if(k==="value") e.value=v;
+      else e.setAttribute(k, v===true?"":v);
+    }
+    for(const kid of kids.flat()){
+      if(kid==null||kid===false) continue;
+      e.append(kid.nodeType?kid:document.createTextNode(String(kid)));
+    }
+    return e;
+  }
+  function toast(msg){
+    const t = h("div",{class:"toast"},msg); document.body.append(t);
+    setTimeout(()=>t.remove(),2600);
+  }
+  function fmtDate(iso){
+    try{ return new Date(iso).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+    catch(e){ return ""; }
+  }
+  function telHref(p){ return "tel:"+String(p||"").replace(/[^\d+]/g,""); }
+  function statusOf(c){ const n=(c.notes||[]); const last=n[n.length-1]; return last&&last.result?last.result:""; }
+
+  /* ---------- Daten ---------- */
+  const LS_DATA="anrufliste.v1", LS_KEY="anrufliste.apikey", LS_MODEL="anrufliste.model";
+  const DEFAULT_MODEL="claude-sonnet-5-5";
+  const SEED=[{"kunde": "KE1021", "name": "Baum & Schier GmbH", "phone": "+49 69 477077", "adresse": "Leonhardsgasse 21", "ort": "60389 Frankfurt", "ansprechpartner": ""}, {"kunde": "KE1030", "name": "Peter Streun", "phone": "+49 6181 9083277", "adresse": "Voltastraße 6", "ort": "63477 Maintal", "ansprechpartner": ""}, {"kunde": "KE1101", "name": "HALFAR GmbH", "phone": "+49 69 83007700", "adresse": "Im Großen Ahl 39", "ort": "63075 Offenbach", "ansprechpartner": ""}, {"kunde": "KE1117", "name": "Autohaus Gnielinski GmbH", "phone": "+49 6101 8027580", "adresse": "Homburger Str. 67", "ort": "61118 Bad Vilbel", "ansprechpartner": ""}, {"kunde": "KE1121", "name": "Reifen Weber Inh. Wahid", "phone": "+49 6101 2610", "adresse": "Friedberger Str. 42", "ort": "61118 Bad Vilbel", "ansprechpartner": ""}, {"kunde": "KE1124", "name": "Pro Car GmbH", "phone": "+49 69 50682823", "adresse": "Am Stock 3", "ort": "61118 Bad Vilbel", "ansprechpartner": ""}, {"kunde": "KE1125", "name": "Aron Cars", "phone": "+49 6101 9899460", "adresse": "Kasseler Str. 23", "ort": "61118 Bad Vilbel", "ansprechpartner": ""}];
+  const Cap = window.Capacitor || null;
+  const P = (Cap && Cap.Plugins) || {};
+  let DB={customers:{}, angebot:DEFAULT_ANGEBOT};
+  function persist(){ try{ localStorage.setItem(LS_DATA, JSON.stringify(DB)); }catch(e){ toast("Speichern im Gerät fehlgeschlagen (Speicher voll?)."); } }
+  function loadDb(){
+    try{
+      const raw=localStorage.getItem(LS_DATA);
+      if(raw){ const d=JSON.parse(raw); if(d && typeof d==="object"){ DB={customers:d.customers||{}, angebot:d.angebot||DEFAULT_ANGEBOT}; return; } }
+    }catch(e){}
+    DB={customers:{}, angebot:DEFAULT_ANGEBOT};
+    SEED.forEach(x=>{ DB.customers[x.kunde]=Object.assign({notes:[],created:new Date().toISOString()},x); });
+    persist();
+  }
+  function syncState(){
+    const list=Object.keys(DB.customers).map(id=>Object.assign({id},DB.customers[id]));
+    list.sort((a,b)=>String(a.kunde||a.id).localeCompare(String(b.kunde||b.id),"de",{numeric:true}));
+    state.customers=list; state.angebot=DB.angebot||DEFAULT_ANGEBOT; state.ready=true; state.error="";
+  }
+  state.col={ doc(id){ return {
+    async set(obj){ if(id==="_settings") DB.angebot=obj.angebot; else DB.customers[id]=obj; persist(); syncState(); render(); },
+    async update(p){ if(id==="_settings") Object.assign(DB,p); else { if(!DB.customers[id]) throw {code:"invalid_argument"}; Object.assign(DB.customers[id],p); } persist(); syncState(); render(); }
+  }; } };
+
+  /* ---------- Claude-API (eigener Schlüssel) ---------- */
+  function hasKey(){ return !!(localStorage.getItem(LS_KEY)||"").trim(); }
+  async function fileToJpegB64(file){
+    let bmp;
+    try{ bmp=await createImageBitmap(file); }catch(e){ throw {code:"image_rejected"}; }
+    const sc=Math.min(1,1568/Math.max(bmp.width,bmp.height));
+    const c=document.createElement("canvas"); c.width=Math.max(1,Math.round(bmp.width*sc)); c.height=Math.max(1,Math.round(bmp.height*sc));
+    c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+    return c.toDataURL("image/jpeg",0.85).split(",")[1];
+  }
+  async function callClaude(prompt, images){
+    const key=(localStorage.getItem(LS_KEY)||"").trim(); if(!key) throw {code:"no_key"};
+    const model=(localStorage.getItem(LS_MODEL)||"").trim()||DEFAULT_MODEL;
+    let content=prompt;
+    if(images && images.length){
+      content=[];
+      for(const f of images){ content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:await fileToJpegB64(f)}}); }
+      content.push({type:"text",text:prompt});
+    }
+    let res;
+    try{
+      res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+        headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({model,max_tokens:2500,messages:[{role:"user",content}]})});
+    }catch(e){ throw {code:"offline"}; }
+    if(!res.ok){
+      let msg=""; try{ const j=await res.json(); msg=(j&&j.error&&j.error.message)||""; }catch(e){}
+      throw {code: res.status===401||res.status===403?"bad_key":res.status===429?"rate_limited":"api_error", message:msg};
+    }
+    const j=await res.json();
+    return (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+  }
+  function parseJsonLoose(text){
+    let t=String(text||"").replace(/```json|```/g,"").trim();
+    try{ return JSON.parse(t); }catch(e){}
+    const a=t.indexOf("["), b=t.lastIndexOf("]");
+    if(a>=0&&b>a){ try{ return JSON.parse(t.slice(a,b+1)); }catch(e){} }
+    const c=t.indexOf("{"), d=t.lastIndexOf("}");
+    if(c>=0&&d>c){ try{ return JSON.parse(t.slice(c,d+1)); }catch(e){} }
+    throw {code:"invalid_json"};
+  }
+  function makeSample(){
+    const sample=async (input,opts)=>{
+      const text=await callClaude(input,(opts&&opts.images)?Array.from(opts.images):null);
+      if(opts&&opts.onText) opts.onText({text,delta:text});
+      return {text,truncated:false};
+    };
+    sample.json=async (input,opts)=>{ const r=await sample(input,Object.assign({},opts,{onText:null})); return parseJsonLoose(r.text); };
+    sample.limits=async ()=>({images:{maxCount:4,maxInputBytes:20000000,mediaTypes:["image/jpeg","image/png","image/webp"]}});
+    return sample;
+  }
+  function makeDownloads(){
+    return { async save({filename,data}){
+      if(P.Filesystem && P.Share){
+        const r=await P.Filesystem.writeFile({path:filename,data:String(data),directory:"CACHE",encoding:"utf8"});
+        try{ await P.Share.share({title:filename,url:r.uri,dialogTitle:"Speichern oder teilen"}); }
+        catch(e){ throw {code:"cancelled"}; }
+        return {status:"saved"};
+      }
+      const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([data])); a.download=filename; document.body.append(a); a.click(); a.remove();
+      return {status:"saved"};
+    } };
+  }
+  function openUrl(url){
+    if(P.Browser){ P.Browser.open({url}); return; }
+    try{ window.open(url,"_blank","noopener"); }catch(e){}
+  }
+  function aiErrText(e, fb){
+    const c=e&&e.code;
+    return c==="no_key" ? "Bitte zuerst in den Einstellungen (⚙) deinen API-Schlüssel eintragen." :
+      c==="bad_key" ? "Der API-Schlüssel wurde abgelehnt. Bitte in den Einstellungen prüfen." :
+      c==="rate_limited" ? "Bitte kurz warten und noch einmal versuchen." :
+      c==="offline" ? "Keine Internetverbindung." :
+      c==="invalid_json" ? "Die Antwort konnte nicht gelesen werden. Bitte nochmal versuchen." :
+      c==="image_rejected" ? "Dieses Bild konnte nicht gelesen werden. Bitte ein normales Foto oder einen Screenshot nehmen." :
+      (e&&e.message ? fb+" ("+e.message+")" : fb);
+  }
+
+  async function init(){
+    state.sample=makeSample(); state.downloads=makeDownloads();
+    state.imgLimits={maxCount:4,maxInputBytes:20000000,mediaTypes:["image/jpeg","image/png","image/webp"]};
+    loadDb(); syncState(); render();
+  }
+  async function writeDoc(id, fn){
+    if(state.busy) { toast("Einen Moment, es wird noch gespeichert …"); return false; }
+    state.busy=true;
+    try{ await fn(state.col.doc(id)); return true; }
+    catch(e){ toast("Speichern fehlgeschlagen: "+(e&&e.code||"Fehler")); return false; }
+    finally{ state.busy=false; }
+  }
+  async function deleteCustomer(c){
+    if(!confirm("Kunde „"+c.name+"“ mit allen Notizen löschen?")) return;
+    delete DB.customers[c.id]; persist(); syncState(); state.openId=null; render(); toast("Kunde gelöscht");
+  }
+  async function exportBackup(){
+    try{ await state.downloads.save({filename:"Anrufliste-Sicherung.json", data:JSON.stringify(DB,null,1)}); }
+    catch(e){ if(!e||e.code!=="cancelled") toast("Sicherung nicht möglich."); }
+  }
+  async function importBackup(file){
+    if(!file) return;
+    try{
+      const d=JSON.parse(await file.text());
+      if(!d||typeof d!=="object"||!d.customers||typeof d.customers!=="object") throw 0;
+      if(!confirm("Alle aktuellen Daten durch die Sicherung ersetzen? ("+Object.keys(d.customers).length+" Kunden)")) return;
+      DB={customers:d.customers, angebot:d.angebot||DEFAULT_ANGEBOT}; persist(); syncState(); render(); toast("Sicherung eingespielt");
+    }catch(e){ toast("Das ist keine gültige Sicherungsdatei."); }
+  }
+  function pad(n){ return String(n).padStart(2,"0"); }
+  function toLocalInput(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes()); }
+  function inDays(days,hour){ const d=new Date(); d.setDate(d.getDate()+days); d.setHours(hour,0,0,0); return toLocalInput(d); }
+  function fmtLocal(v){
+    if(!v) return "";
+    const d=new Date(v); if(isNaN(d)) return "";
+    return d.toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+" Uhr";
+  }
+  function isDue(v){ if(!v) return false; const d=new Date(v); if(isNaN(d)) return false; const end=new Date(); end.setHours(23,59,59,999); return d<=end; }
+  function stamp(v,addMin){ const d=new Date(v); d.setMinutes(d.getMinutes()+(addMin||0)); return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(d.getHours())+pad(d.getMinutes())+"00"; }
+  function calDetails(c, text, einwand){
+    const last=(c.notes||[]).slice(-1)[0]||{};
+    const lines=["Rückruf bei "+c.name];
+    if(c.phone) lines.push("Tel: "+c.phone);
+    const t=text||last.text, e=einwand||last.einwand;
+    if(t) lines.push("Notiz: "+t);
+    if(e) lines.push("Einwand: "+e);
+    return lines.join("\n");
+  }
+  function gcalLink(c, when, text, einwand){
+    return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent("Rückruf: "+c.name)+
+      "&dates="+stamp(when,0)+"/"+stamp(when,15)+"&ctz=Europe%2FBerlin&details="+encodeURIComponent(calDetails(c,text,einwand));
+  }
+  async function saveIcs(c){
+    if(!state.downloads){ toast("Datei-Export ist hier nicht verfügbar."); return; }
+    const esc=t=>String(t).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+    const now=new Date(); const utc=now.getUTCFullYear()+pad(now.getUTCMonth()+1)+pad(now.getUTCDate())+"T"+pad(now.getUTCHours())+pad(now.getUTCMinutes())+pad(now.getUTCSeconds())+"Z";
+    const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Anrufliste Kunden OST//DE","BEGIN:VEVENT",
+      "UID:rueckruf-"+c.id+"-"+stamp(c.rueckruf,0)+"@anrufliste","DTSTAMP:"+utc,
+      "DTSTART:"+stamp(c.rueckruf,0),"DTEND:"+stamp(c.rueckruf,15),
+      "SUMMARY:"+esc("Rückruf: "+c.name),"DESCRIPTION:"+esc(calDetails(c)),
+      "BEGIN:VALARM","TRIGGER:-PT10M","ACTION:DISPLAY","DESCRIPTION:"+esc("Rückruf: "+c.name),"END:VALARM",
+      "END:VEVENT","END:VCALENDAR"].join("\r\n");
+    try{ await state.downloads.save({filename:"Rueckruf-"+c.id+".ics", data:ics}); }
+    catch(e){ if(!e||e.code!=="cancelled") toast("Kalenderdatei konnte nicht gespeichert werden."); }
+  }
+  async function clearCallback(c){
+    await writeDoc(c.id, ref=>ref.update({rueckruf:""}));
+  }
+  async function saveNote(c){
+    const d=state.draft;
+    if(!d.text.trim() && !d.einwand.trim() && !d.result){ toast("Bitte Ergebnis oder Notiz eingeben."); return; }
+    if(d.result==="rueckruf" && !d.rueckruf){ toast("Bitte Datum und Uhrzeit für den Rückruf wählen."); return; }
+    const isCb = d.result==="rueckruf";
+    if(isCb && d.cal){ openUrl(gcalLink(c,d.rueckruf,d.text.trim(),d.einwand.trim())); }
+    const note={ts:new Date().toISOString(), result:d.result||"", text:d.text.trim(), einwand:d.einwand.trim()};
+    if(isCb) note.rueckruf=d.rueckruf;
+    const notes=(c.notes||[]).concat([note]);
+    const patch={notes, lastCall:note.ts};
+    if(isCb) patch.rueckruf=d.rueckruf; else if(d.result && d.result!=="nicht-erreicht") patch.rueckruf="";
+    const ok=await writeDoc(c.id, ref=>ref.update(patch));
+    if(ok){ state.draft={result:"",text:"",einwand:"",rueckruf:"",cal:true}; toast(isCb?"Rückruf gespeichert":"Notiz gespeichert"); render(); }
+  }
+  async function deleteNote(c, idx){
+    if(!confirm("Diese Notiz löschen?")) return;
+    const notes=(c.notes||[]).filter((_,i)=>i!==idx);
+    await writeDoc(c.id, ref=>ref.update({notes}));
+  }
+  function digits(p){ return String(p||"").replace(/\D/g,"").replace(/^0049|^49/,"0"); }
+  function findDuplicate(f){
+    const id=(f.kunde||"").trim().replace(/[^A-Za-z0-9_-]/g,"");
+    const dp=digits(f.phone);
+    return state.customers.find(c=> (id && c.id===id) || (dp.length>5 && digits(c.phone)===dp));
+  }
+  async function addCustomer(f, quiet){
+    const name=f.name.trim(); if(!name){ if(!quiet) toast("Name fehlt."); return false; }
+    const dup=findDuplicate(f);
+    if(dup){ if(!quiet) toast("Gibt es schon: "+dup.name); return "dup"; }
+    let id=(f.kunde||"").trim().replace(/[^A-Za-z0-9_-]/g,"");
+    if(!id) id="K"+Date.now()+Math.floor(Math.random()*1000);
+    return await writeDoc(id, ref=>ref.set({name, ansprechpartner:(f.ansprechpartner||"").trim(), kunde:(f.kunde||"").trim(), phone:(f.phone||"").trim(), ort:(f.ort||"").trim(), adresse:(f.adresse||"").trim(), notes:[], created:new Date().toISOString()}));
+  }
+  async function addManual(){
+    const ok=await addCustomer(state.form);
+    if(ok===true){ state.form={name:"",ansprechpartner:"",kunde:"",phone:"",adresse:"",ort:""}; state.addOpen=false; toast("Kunde angelegt"); render(); }
+  }
+  async function importFiles(fileList){
+    const files=Array.from(fileList||[]); if(!files.length) return;
+    if(!state.sample || !state.imgLimits){ state.importErr="Foto-Import ist hier nicht verfügbar."; render(); return; }
+    const max=state.imgLimits.maxCount||4;
+    const use=files.slice(0,max);
+    state.importing=true; state.importErr=""; state.candidates=null; render();
+    const prompt=
+"Die Bilder zeigen Kontaktdaten: Visitenkarten, Screenshots aus einem Kundensystem oder Fotos davon. Lies jedes Bild und extrahiere jeden Kunden als Eintrag.\n"+
+"Felder je Eintrag: name (Firmenname; wenn es keine Firma gibt, der Personenname), ansprechpartner (Person, falls zusätzlich zur Firma genannt), kunde (Kundennummer wie KE1124, nur wenn sichtbar), phone (Haupt-Telefonnummer im internationalen Format mit Leerzeichen, z. B. +49 69 477077), adresse (Straße und Hausnummer), ort (PLZ und Ort).\n"+
+"Regeln: Nichts erfinden. Nicht Lesbares oder Fehlendes als leeren String \"\" angeben. Denselben Kunden nicht doppelt aufführen, auch wenn er auf mehreren Bildern vorkommt. Antworte ausschließlich mit einem JSON-Array von Objekten, ohne weiteren Text.";
+    try{
+      let res = await state.sample.json(prompt,{images:use, modelTier:"default"});
+      if(res && !Array.isArray(res)) res = Array.isArray(res.kunden)?res.kunden:[res];
+      const list=(res||[]).filter(x=>x&&typeof x==="object").map(x=>({
+        name:String(x.name||"").trim(), ansprechpartner:String(x.ansprechpartner||"").trim(), kunde:String(x.kunde||"").trim(),
+        phone:String(x.phone||"").trim(), adresse:String(x.adresse||"").trim(), ort:String(x.ort||"").trim()
+      })).filter(x=>x.name||x.phone);
+      list.forEach(x=>{ x.dup=!!findDuplicate(x); x.take=!x.dup; });
+      if(!list.length) state.importErr="Auf dem Bild konnte ich keine Kundendaten erkennen. Versuche ein schärferes Foto.";
+      else state.candidates=list;
+      if(files.length>use.length) toast("Es wurden nur die ersten "+use.length+" Bilder gelesen.");
+    }catch(e){
+      state.importErr = aiErrText(e,"Das Lesen des Bildes hat nicht geklappt.");
+    }
+    state.importing=false; render();
+  }
+  async function saveCandidates(){
+    const todo=(state.candidates||[]).filter(x=>x.take);
+    if(!todo.length){ toast("Nichts ausgewählt."); return; }
+    let n=0, skipped=0;
+    for(const x of todo){
+      const r=await addCustomer(x,true);
+      if(r===true) n++; else if(r==="dup") skipped++; else break;
+    }
+    state.candidates=null; state.addOpen=false;
+    toast(n+" Kunde"+(n===1?"":"n")+" angelegt"+(skipped?(" · "+skipped+" schon vorhanden"):""));
+    render();
+  }
+
+  async function saveAngebot(v){
+    await writeDoc("_settings", ref=>ref.set({angebot:v.trim()||DEFAULT_ANGEBOT}));
+  }
+  async function exportCsv(){
+    if(!state.downloads){ toast("Export ist hier nicht verfügbar."); return; }
+    const esc=s=>'"'+String(s==null?"":s).replace(/"/g,'""').replace(/\r?\n/g," ⏎ ")+'"';
+    const lines=[["Kunden-Nr.","Name","Telefon","Ort","Adresse","Datum","Ergebnis","Notiz","Einwand"].map(esc).join(";")];
+    state.customers.forEach(c=>{
+      const notes=c.notes||[];
+      if(!notes.length) lines.push([c.kunde,c.name,c.phone,c.ort,c.adresse,"","","",""].map(esc).join(";"));
+      notes.forEach(n=>lines.push([c.kunde,c.name,c.phone,c.ort,c.adresse,fmtDate(n.ts),(ERG[n.result]||{}).t||"",n.text,n.einwand].map(esc).join(";")));
+    });
+    try{ await state.downloads.save({filename:"Kundendatenbank.csv", data:"\ufeff"+lines.join("\r\n")}); }
+    catch(e){ if(!e||e.code!=="cancelled") toast("Export nicht möglich."); }
+  }
+
+  /* ---------- Diktat ---------- */
+  const WebSR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SR = !!(P.SpeechRecognition || WebSR);
+  let rec=null, recKey=null;
+  function updateMicButtons(){
+    document.querySelectorAll(".mic").forEach(b=>{
+      const on = recKey && b.dataset.key===recKey;
+      b.classList.toggle("rec",!!on);
+      b.textContent = on ? "⏹" : "🎤";
+    });
+    const hint=document.getElementById("micHint");
+    if(hint) hint.textContent = recKey ? "Ich höre zu … sprich jetzt. Zum Beenden nochmal aufs Mikrofon tippen." : "Aufs Mikrofon tippen, sprechen, nochmal tippen zum Beenden.";
+  }
+  function endDictation(){
+    rec=null; recKey=null;
+    if(P.SpeechRecognition){ try{ P.SpeechRecognition.removeAllListeners(); }catch(e){} }
+    updateMicButtons();
+  }
+  function stopDictation(){
+    if(P.SpeechRecognition){ try{ P.SpeechRecognition.stop(); }catch(e){} endDictation(); return; }
+    if(rec && rec.stop){ try{ rec.stop(); }catch(e){} }
+  }
+  async function toggleDictation(key, taId){
+    if(recKey===key){ stopDictation(); return; }
+    if(recKey) stopDictation();
+    const first=document.getElementById(taId); if(!first) return;
+    const base=first.value.replace(/\s+$/,"");
+    const join=t=>(base?base+" ":"")+t;
+    const setText=t=>{ const el=document.getElementById(taId); const v=join(t).trim(); if(el) el.value=v; state.draft[key]=v; };
+    if(P.SpeechRecognition){
+      const sp=P.SpeechRecognition;
+      try{
+        const av=await sp.available();
+        if(!av||!av.available){ toast("Spracherkennung ist auf diesem Handy nicht verfügbar."); return; }
+        let perm=await sp.checkPermissions();
+        if(!perm||perm.speechRecognition!=="granted") perm=await sp.requestPermissions();
+        if(!perm||perm.speechRecognition!=="granted"){ toast("Mikrofon nicht erlaubt. Bitte in den Android-Einstellungen für die App freigeben."); return; }
+        await sp.removeAllListeners();
+        await sp.addListener("partialResults",d=>{ const t=(d&&d.matches&&d.matches[0])||""; setText(t); });
+        await sp.addListener("listeningState",d=>{ if(d&&d.status==="stopped") endDictation(); });
+        recKey=key; rec={stop:()=>sp.stop()}; updateMicButtons();
+        await sp.start({language:"de-DE",maxResults:1,partialResults:true,popup:false});
+      }catch(e){ toast("Diktat konnte nicht starten."); endDictation(); }
+      return;
+    }
+    const r=new WebSR(); r.lang="de-DE"; r.continuous=true; r.interimResults=true; let finalText="";
+    r.onresult=ev=>{
+      let interim="";
+      for(let i=ev.resultIndex;i<ev.results.length;i++){
+        const t=ev.results[i][0].transcript;
+        if(ev.results[i].isFinal) finalText+=(finalText?" ":"")+t.trim(); else interim+=t;
+      }
+      setText(finalText+(interim?(finalText?" ":"")+interim:""));
+    };
+    r.onerror=ev=>{ const c=ev&&ev.error; if(c==="not-allowed"||c==="service-not-allowed") toast("Das Mikrofon ist gesperrt."); else if(c!=="aborted"&&c!=="no-speech") toast("Diktat hat nicht geklappt ("+c+")."); };
+    r.onend=()=>{ setText(finalText); if(rec===r) endDictation(); };
+    try{ r.start(); rec=r; recKey=key; }catch(e){ toast("Diktat konnte nicht starten."); endDictation(); }
+    updateMicButtons();
+  }
+  function micBtn(key,taId){
+    return SR ? h("button",{class:"mic",type:"button","data-key":key,"aria-label":"Diktieren",onClick:()=>toggleDictation(key,taId)},"🎤") : null;
+  }
+
+  /* ---------- Claude-Einwandhilfe ---------- */
+  function historyText(c){
+    return (c.notes||[]).map(n=>"- "+fmtDate(n.ts)+" | "+((ERG[n.result]||{}).t||"ohne Ergebnis")+
+      (n.text?" | Notiz: "+n.text:"")+(n.einwand?" | EINWAND: "+n.einwand:"")).join("\n")||"(noch keine Notizen)";
+  }
+  async function askAi(c){
+    if(!state.sample){ state.ai={id:c.id,text:"",loading:false,error:"Claude-Hilfe ist hier nicht verfügbar."}; render(); return; }
+    state.ai={id:c.id,text:"",loading:true,error:""}; render();
+    const prompt =
+"Du bist ein erfahrener Telefonvertriebs-Coach. Antworte auf Deutsch, locker, konkret, telefontauglich (kurze Sätze, direkt sprechbar).\n\n"+
+"MEIN ANGEBOT: "+state.angebot+"\n"+
+"KUNDE: "+c.name+(c.ort?" ("+c.ort+")":"")+"\n"+
+"BISHERIGE ANRUFE UND NOTIZEN (alt → neu):\n"+historyText(c)+"\n\n"+
+"AUFGABE: Bereite mich auf den nächsten Anruf bei diesem Kunden vor.\n"+
+"1) Was steckt wahrscheinlich wirklich hinter den bisherigen Einwänden/Ausreden? (kurz, 1–3 Sätze; sage ehrlich, wenn die Datenlage dünn ist)\n"+
+"2) Je Einwand 2 wörtlich sprechbare Antworten, die den Einwand aus dem Weg räumen (erst Verständnis, dann Rückfrage oder Nutzen).\n"+
+"3) Ein Gesprächseinstieg für den nächsten Anruf, der an das letzte Gespräch anknüpft.\n"+
+"4) Ein kleines, konkretes Ziel für diesen Anruf (z. B. Termin, Muster, Rückrufzeit).\n"+
+"Wenn es noch keine Einwände gibt, gib stattdessen die 3 häufigsten Einwände dieser Zielgruppe mit je einer starken Antwort und einen Einstieg fürs Erstgespräch.";
+    try{
+      await state.sample(prompt,{modelTier:"default", onText:({text})=>{ state.ai.text=text; renderAi(); }});
+      state.ai.loading=false;
+    }catch(e){
+      state.ai.loading=false;
+      state.ai.error = aiErrText(e,"Das hat gerade nicht geklappt.");
+    }
+    render();
+  }
+  async function askAiAll(){
+    if(!state.sample){ state.aiAll={text:"",loading:false,error:"Claude-Hilfe ist hier nicht verfügbar."}; render(); return; }
+    const withE=state.customers.filter(c=>(c.notes||[]).some(n=>n.einwand));
+    if(!withE.length){ state.aiAll={text:"",loading:false,error:"Es sind noch keine Einwände erfasst."}; render(); return; }
+    state.aiAll={text:"",loading:true,error:""}; render();
+    const data=withE.map(c=>"## "+c.name+"\n"+historyText(c)).join("\n\n");
+    const prompt=
+"Du bist ein erfahrener Telefonvertriebs-Coach. Antworte auf Deutsch, knapp und konkret.\n\nMEIN ANGEBOT: "+state.angebot+"\n\n"+
+"Hier sind meine bisherigen Einwände aus Kundengesprächen:\n"+data+"\n\n"+
+"AUFGABE: Gruppiere die Einwände zu Mustern (nenne, wie oft jedes Muster vorkommt). Gib je Muster 2 wörtlich sprechbare Antworten, die den Einwand aus dem Weg räumen. Zum Schluss: Was sollte ich an meinem Gesprächseinstieg ändern?";
+    try{
+      await state.sample(prompt,{modelTier:"default", onText:({text})=>{ state.aiAll.text=text; renderAi(); }});
+      state.aiAll.loading=false;
+    }catch(e){
+      state.aiAll.loading=false; state.aiAll.error=aiErrText(e,"Das hat gerade nicht geklappt.");
+    }
+    render();
+  }
+  function renderAi(){
+    const box=document.getElementById("aiBox");
+    if(box) box.textContent = (state.showAll?state.aiAll.text:state.ai.text)||"Claude denkt nach …";
+  }
+
+  /* ---------- Ansichten ---------- */
+  function listView(){
+    const q=state.search.trim().toLowerCase();
+    let items=state.customers.filter(c=>{
+      if(q && !(String(c.name||"").toLowerCase().includes(q)||String(c.ort||"").toLowerCase().includes(q)||String(c.kunde||"").toLowerCase().includes(q)||String(c.phone||"").includes(q))) return false;
+      const st=statusOf(c);
+      if(state.filter==="alle") return true;
+      if(state.filter==="geplant") return !!c.rueckruf;
+      if(state.filter==="offen") return !st;
+      return st===state.filter;
+    });
+    if(state.filter==="geplant") items=items.slice().sort((a,b)=>String(a.rueckruf).localeCompare(String(b.rueckruf)));
+    const dueCount=state.customers.filter(c=>isDue(c.rueckruf)).length;
+    const filters=[["alle","Alle"],["geplant","📅 Rückrufe"],["offen","Offen"]].concat(ERGEBNISSE.map(e=>[e.k,e.t]));
+    return h("div",{class:"wrap"},
+      h("header",{class:"top"},
+        h("div",{class:"grow"}, h("h1",null,"Anrufliste Kunden OST"), h("div",{class:"sub"},state.customers.length+" Kunden")),
+        h("button",{class:"btn small",onClick:()=>{state.showAll=true;state.aiAll={text:"",loading:false,error:""};render();}},"Einwand-Muster"),
+        h("button",{class:"btn small",onClick:exportCsv},"Export"),
+        h("button",{class:"btn small","aria-label":"Einstellungen",onClick:()=>{state.settingsOpen=true;render();}},"⚙")
+      ),
+      h("input",{type:"search",placeholder:"Suchen (Name, Ort, Nummer)",value:state.search,id:"search",onInput:e=>{state.search=e.target.value;renderKeepFocus();}}),
+      h("div",{class:"chips"}, filters.map(([k,t])=>h("button",{class:"chip"+(state.filter===k?" on":""),onClick:()=>{state.filter=k;render();}},t))),
+      !hasKey()? h("div",{class:"card",style:"cursor:pointer",onClick:()=>{state.settingsOpen=true;render();}},h("span",{class:"name"},"🔑 Für Einwandhilfe und Foto-Import bitte API-Schlüssel eintragen"),h("div",{class:"meta"},"Antippen für die Einstellungen")):null,
+      dueCount? h("div",{class:"card",style:"cursor:pointer;border-color:var(--warn)",onClick:()=>{state.filter="geplant";render();}},h("span",{class:"name",style:"color:var(--warn)"},"📅 "+dueCount+" Rückruf"+(dueCount>1?"e":"")+" heute fällig oder überfällig")):null,
+      state.error? h("div",{class:"card"},state.error):null,
+      !state.ready? h("div",{class:"empty"},"Lade …"):null,
+      state.ready&&!state.error&&!state.customers.length? h("div",{class:"empty"},"Noch keine Kunden. Lege mit „+ Kunde“ den ersten an."):null,
+      items.map(c=>{
+        const st=statusOf(c); const e=ERG[st]; const notes=c.notes||[]; const last=notes[notes.length-1];
+        return h("div",{class:"card"},
+          h("div",{class:"row"},
+            h("div",{class:"grow",style:"cursor:pointer",onClick:()=>{state.openId=c.id;state.draft={result:"",text:"",einwand:"",rueckruf:"",cal:true};state.ai={id:null,text:"",loading:false,error:""};render();window.scrollTo(0,0);}},
+              h("div",{class:"name"},c.name),
+              h("div",{class:"meta"},[c.kunde,c.ort].filter(Boolean).join(" · ")),
+              c.rueckruf? h("div",{class:"meta",style:"font-weight:700;"+(isDue(c.rueckruf)?"color:var(--warn)":"")},"📅 Rückruf: "+fmtLocal(c.rueckruf)):null,
+              last&&(last.text||last.einwand)? h("div",{class:"snip"},(last.einwand?"Einwand: "+last.einwand:last.text)):null,
+              h("div",{style:"margin-top:6px;display:flex;gap:6px;align-items:center"},
+                h("span",{class:"badge "+(e?e.cls:"")},e?e.t:"Offen"),
+                notes.length? h("span",{class:"meta"},notes.length+" Notiz"+(notes.length>1?"en":"")):null)
+            ),
+            c.phone? h("a",{class:"btn call",href:telHref(c.phone)},"Anrufen"):null
+          )
+        );
+      }),
+      h("button",{class:"btn primary fab",onClick:()=>{state.addOpen=true;render();}},"+ Kunde")
+    );
+  }
+  function renderKeepFocus(){
+    const pos=document.getElementById("search")&&document.getElementById("search").selectionStart;
+    render();
+    const s=document.getElementById("search"); if(s){ s.focus(); try{s.setSelectionRange(pos,pos);}catch(e){} }
+  }
+
+  function detailView(c){
+    const notes=(c.notes||[]).map((n,i)=>({n,i})).reverse();
+    const hasEinwand=(c.notes||[]).some(n=>n.einwand);
+    const aiState=state.ai.id===c.id?state.ai:{text:"",loading:false,error:""};
+    return h("div",{class:"sheet"}, h("div",{class:"wrap"},
+      h("header",{class:"top"},
+        h("button",{class:"btn small",onClick:()=>{state.openId=null;render();}},"← Zurück"),
+        h("div",{class:"grow"})
+      ),
+      h("h1",{style:"font-size:22px;margin:4px 0"},c.name),
+      h("div",{class:"meta"},[c.ansprechpartner,c.kunde,c.adresse,c.ort].filter(Boolean).join(" · ")),
+      h("div",{style:"margin:12px 0"}, c.phone? h("a",{class:"btn call",href:telHref(c.phone)},"📞 "+c.phone):h("span",{class:"meta"},"Keine Nummer hinterlegt")),
+      c.rueckruf? h("div",{class:"card"},
+        h("div",{class:"name",style:isDue(c.rueckruf)?"color:var(--warn)":""},"📅 Rückruf geplant: "+fmtLocal(c.rueckruf)),
+        h("div",{class:"row",style:"flex-wrap:wrap;margin-top:8px"},
+          h("button",{class:"btn small",onClick:()=>openUrl(gcalLink(c,c.rueckruf))},"In Google Kalender"),
+          h("button",{class:"btn small",onClick:()=>saveIcs(c)},"Kalenderdatei (.ics)"),
+          h("button",{class:"btn small",onClick:()=>clearCallback(c)},"Erledigt"))
+      ) : null,
+
+      h("label",{class:"l"},"ERGEBNIS DES ANRUFS"),
+      h("div",{class:"chips",style:"flex-wrap:wrap;overflow:visible"}, ERGEBNISSE.map(e=>h("button",{class:"chip"+(state.draft.result===e.k?" on":""),onClick:()=>{state.draft.result=(state.draft.result===e.k?"":e.k); if(state.draft.result==="rueckruf" && !state.draft.rueckruf) state.draft.rueckruf=inDays(1,10); render();}},e.t))),
+
+      state.draft.result==="rueckruf" ? h("div",{class:"card"},
+        h("label",{class:"l",style:"margin-top:0"},"RÜCKRUF AM"),
+        h("input",{type:"datetime-local",value:state.draft.rueckruf,onInput:e=>{state.draft.rueckruf=e.target.value;},onChange:e=>{state.draft.rueckruf=e.target.value;}}),
+        h("div",{class:"chips",style:"flex-wrap:wrap;overflow:visible"},
+          [["Heute 16 Uhr",0,16],["Morgen 10 Uhr",1,10],["Übermorgen 10 Uhr",2,10],["In 1 Woche",7,10]].map(([t,dd,hh])=>h("button",{class:"chip",onClick:()=>{state.draft.rueckruf=inDays(dd,hh);render();}},t))),
+        h("label",{class:"row",style:"gap:8px;margin-top:6px"},
+          h("input",{type:"checkbox",checked:state.draft.cal,onChange:e=>{state.draft.cal=e.target.checked;}}),
+          h("span",null,"Beim Speichern gleich im Google Kalender öffnen"))
+      ) : null,
+      h("label",{class:"l"},"NOTIZ (per Diktat)"),
+      h("div",{class:"dict"},
+        h("textarea",{id:"dText",placeholder:SR?"Mikrofon antippen und sprechen …":"Notiz eingeben oder mit dem Mikrofon deiner Tastatur diktieren …",value:state.draft.text,onInput:e=>{state.draft.text=e.target.value;}}),
+        micBtn("text","dText")),
+      h("label",{class:"l"},"EINWAND / AUSREDE (optional)"),
+      h("div",{class:"dict"},
+        h("textarea",{id:"dEin",style:"min-height:70px",placeholder:"Was hat der Kunde als Grund genannt? z. B. „Haben wir schon einen festen Partner“",value:state.draft.einwand,onInput:e=>{state.draft.einwand=e.target.value;}}),
+        micBtn("einwand","dEin")),
+      h("div",{class:"hint",id:"micHint"},SR?"Aufs Mikrofon tippen, sprechen, nochmal tippen zum Beenden.":"Direktes Diktieren geht in dieser Ansicht nicht. Nutze das Mikrofon deiner Tastatur."),
+      h("div",{style:"margin-top:12px"}, h("button",{class:"btn primary",onClick:()=>saveNote(c)},"Notiz speichern")),
+
+      h("h2",{style:"font-size:17px;margin:26px 0 4px"},"Verlauf"),
+      notes.length? notes.map(({n,i})=>h("div",{class:"note"},
+        h("div",{class:"t"},fmtDate(n.ts)+" · "+((ERG[n.result]||{}).t||"ohne Ergebnis")+" ",
+          h("button",{class:"btn small",style:"padding:2px 8px;margin-left:6px",onClick:()=>deleteNote(c,i)},"löschen")),
+        n.text? h("div",null,n.text):null,
+        n.einwand? h("div",{class:"einwand"},"Einwand: "+n.einwand):null
+      )) : h("div",{class:"meta"},"Noch keine Notizen."),
+
+      h("h2",{style:"font-size:17px;margin:26px 0 6px"},"Einwandhilfe"),
+      h("div",{class:"hint",style:"margin:0 0 8px"},hasEinwand?"Claude nutzt alle bisherigen Notizen und Einwände dieses Kunden.":"Noch kein Einwand erfasst – Claude gibt dir dann typische Einwände samt Antworten."),
+      h("button",{class:"btn primary",disabled:aiState.loading,onClick:()=>askAi(c)},aiState.loading?"Claude arbeitet …":"Anruf vorbereiten mit Claude"),
+      aiState.error? h("div",{class:"hint",style:"color:var(--bad)"},aiState.error):null,
+      (aiState.text||aiState.loading)? h("div",{class:"ai",id:"aiBox"},aiState.text||"Claude denkt nach …"):null,
+
+      h("label",{class:"l",style:"margin-top:26px"},"MEIN ANGEBOT (Grundlage für die Einwandhilfe)"),
+      h("textarea",{style:"min-height:60px",value:state.angebot,onChange:e=>saveAngebot(e.target.value)}),
+      h("div",{style:"margin-top:30px"},h("button",{class:"btn small",style:"color:var(--bad)",onClick:()=>deleteCustomer(c)},"Kunden löschen"))
+    ));
+  }
+
+  function allView(){
+    const a=state.aiAll;
+    return h("div",{class:"sheet"}, h("div",{class:"wrap"},
+      h("header",{class:"top"},h("button",{class:"btn small",onClick:()=>{state.showAll=false;render();}},"← Zurück")),
+      h("h1",{style:"font-size:22px;margin:4px 0"},"Einwand-Muster"),
+      h("div",{class:"hint",style:"margin:0 0 10px"},"Claude wertet alle erfassten Einwände aus und zeigt, was sich wiederholt und wie du es aus dem Weg räumst."),
+      h("button",{class:"btn primary",disabled:a.loading,onClick:askAiAll},a.loading?"Claude arbeitet …":"Alle Einwände auswerten"),
+      a.error? h("div",{class:"hint",style:"color:var(--bad)"},a.error):null,
+      (a.text||a.loading)? h("div",{class:"ai",id:"aiBox"},a.text||"Claude denkt nach …"):null
+    ));
+  }
+
+  function addView(){
+    const f=state.form;
+    const field=(label,key,type)=>[h("label",{class:"l"},label),h("input",{type:type||"text",value:f[key],onInput:e=>{f[key]=e.target.value;}})];
+    const types=(state.imgLimits&&state.imgLimits.mediaTypes&&state.imgLimits.mediaTypes.length)?state.imgLimits.mediaTypes.join(","):"image/*";
+    const cam=h("input",{type:"file",accept:types,capture:"environment",style:"display:none",onChange:e=>{importFiles(e.target.files);e.target.value="";}});
+    const gal=h("input",{type:"file",accept:types,multiple:true,style:"display:none",onChange:e=>{importFiles(e.target.files);e.target.value="";}});
+    const c=state.candidates;
+    const box = state.imgLimits ? h("div",{class:"card"},
+        h("div",{class:"name"},"Aus Bild anlegen"),
+        h("div",{class:"hint",style:"margin:4px 0 10px"},"Visitenkarte fotografieren oder Screenshots/Fotos aus deiner Galerie wählen. Claude liest die Daten, du prüfst sie vor dem Speichern."),
+        h("div",{class:"row",style:"flex-wrap:wrap"},
+          h("button",{class:"btn primary",disabled:state.importing,onClick:()=>cam.click()},"📷 Foto aufnehmen"),
+          h("button",{class:"btn primary",disabled:state.importing,onClick:()=>gal.click()},"🖼 Aus Galerie wählen")),
+        cam, gal,
+        state.importing? h("div",{class:"hint"},"Claude liest das Bild … das dauert einen Moment."):null,
+        state.importErr? h("div",{class:"hint",style:"color:var(--bad)"},state.importErr):null
+      ) : h("div",{class:"hint"},"Der Foto-Import ist in dieser Ansicht nicht verfügbar.");
+    const head=h("header",{class:"top"},h("button",{class:"btn small",onClick:()=>{state.addOpen=false;state.candidates=null;state.importErr="";render();}},"← Abbrechen"));
+    if(c){
+      return h("div",{class:"sheet"}, h("div",{class:"wrap"}, head,
+        h("h1",{style:"font-size:22px;margin:4px 0"},"Erkannte Kunden prüfen"),
+        h("div",{class:"hint",style:"margin:0 0 8px"},"Bitte Name und Nummer kurz gegenprüfen. Du kannst alles direkt ändern."),
+        c.map((x,i)=>h("div",{class:"card"},
+          h("label",{class:"row",style:"gap:8px;font-weight:700"},
+            h("input",{type:"checkbox",checked:x.take,onChange:e=>{x.take=e.target.checked;}}),
+            h("span",null,x.dup?"Schon vorhanden – wird übersprungen":"Übernehmen")),
+          [["name","Name / Firma"],["ansprechpartner","Ansprechpartner"],["kunde","Kunden-Nr."],["phone","Telefon"],["adresse","Straße"],["ort","PLZ und Ort"]].map(([k,t])=>[
+            h("label",{class:"l",style:"margin:8px 0 4px"},t.toUpperCase()),
+            h("input",{type:k==="phone"?"tel":"text",value:x[k],onInput:e=>{x[k]=e.target.value;}})])
+        )),
+        h("div",{style:"margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"},
+          h("button",{class:"btn primary",onClick:saveCandidates},"Ausgewählte anlegen"),
+          h("button",{class:"btn",onClick:()=>{state.candidates=null;render();}},"Verwerfen"))
+      ));
+    }
+    return h("div",{class:"sheet"}, h("div",{class:"wrap"}, head,
+      h("h1",{style:"font-size:22px;margin:4px 0"},"Neuer Kunde"),
+      box,
+      h("div",{class:"hint",style:"margin:14px 0 0"},"Oder von Hand eintragen:"),
+      field("NAME / FIRMA","name"), field("ANSPRECHPARTNER (optional)","ansprechpartner"), field("KUNDEN-NR. (z. B. KE1126)","kunde"), field("TELEFON","phone","tel"),
+      field("STRASSE","adresse"), field("PLZ UND ORT","ort"),
+      h("div",{style:"margin-top:16px"},h("button",{class:"btn primary",onClick:addManual},"Kunde anlegen"))
+    ));
+  }
+
+  function settingsView(){
+    const keyIn=h("input",{type:"password",value:localStorage.getItem(LS_KEY)||"",placeholder:"sk-ant-…",autocomplete:"off",autocapitalize:"off",spellcheck:"false"});
+    const modelIn=h("input",{type:"text",value:localStorage.getItem(LS_MODEL)||"",placeholder:DEFAULT_MODEL,autocapitalize:"off",spellcheck:"false"});
+    const fileIn=h("input",{type:"file",accept:"application/json,.json",style:"display:none",onChange:e=>{importBackup(e.target.files[0]);e.target.value="";}});
+    return h("div",{class:"sheet"}, h("div",{class:"wrap"},
+      h("header",{class:"top"},h("button",{class:"btn small",onClick:()=>{state.settingsOpen=false;render();}},"← Zurück")),
+      h("h1",{style:"font-size:22px;margin:4px 0"},"Einstellungen"),
+      h("label",{class:"l"},"ANTHROPIC-API-SCHLÜSSEL"), keyIn,
+      h("div",{class:"hint"},"Wird nur auf diesem Handy gespeichert und nur an Anthropic gesendet. Den Schlüssel legst du unter console.anthropic.com an. Setze dort am besten ein Ausgabenlimit. Einwandhilfe und Foto-Import verbrauchen Guthaben dieses Kontos."),
+      h("label",{class:"l"},"MODELL (optional)"), modelIn,
+      h("div",{class:"hint"},"Leer lassen für die Standardeinstellung ("+DEFAULT_MODEL+")."),
+      h("div",{style:"margin-top:14px"},h("button",{class:"btn primary",onClick:()=>{
+        const k=keyIn.value.trim(), m=modelIn.value.trim();
+        try{ if(k) localStorage.setItem(LS_KEY,k); else localStorage.removeItem(LS_KEY); if(m) localStorage.setItem(LS_MODEL,m); else localStorage.removeItem(LS_MODEL); toast("Gespeichert"); }catch(e){ toast("Speichern nicht möglich."); }
+        state.settingsOpen=false; render();
+      }},"Speichern")),
+      h("h2",{style:"font-size:17px;margin:30px 0 6px"},"Sicherung"),
+      h("div",{class:"hint",style:"margin:0 0 8px"},"Deine Kunden und Notizen liegen nur auf diesem Handy. Mach ab und zu eine Sicherung und leg sie z. B. in Google Drive ab."),
+      h("div",{class:"row",style:"flex-wrap:wrap"},
+        h("button",{class:"btn",onClick:exportBackup},"Sicherung exportieren"),
+        h("button",{class:"btn",onClick:()=>fileIn.click()},"Sicherung einspielen"), fileIn)
+    ));
+  }
+
+  function render(){
+    const scroll = window.scrollY;
+    const sheetScroll = document.querySelector(".sheet") ? document.querySelector(".sheet").scrollTop : 0;
+    app.replaceChildren();
+    app.append(listView());
+    if(state.addOpen) app.append(addView());
+    else if(state.showAll) app.append(allView());
+    else if(state.settingsOpen) app.append(settingsView());
+    else if(state.openId){
+      const c=state.customers.find(x=>x.id===state.openId);
+      if(c) app.append(detailView(c)); else state.openId=null;
+    }
+    const sh=document.querySelector(".sheet"); if(sh) sh.scrollTop=sheetScroll;
+    if(rec && !document.getElementById(recKey==="einwand"?"dEin":"dText")){ stopDictation(); }
+    updateMicButtons();
+    window.scrollTo(0,scroll);
+    syncHistory();
+  }
+
+  let pushed=false;
+  function anySheet(){ return state.addOpen||state.showAll||state.settingsOpen||!!state.openId; }
+  function syncHistory(){
+    const open=anySheet();
+    if(open && !pushed){ try{ history.pushState({s:1},""); pushed=true; }catch(e){} }
+    else if(!open && pushed){ pushed=false; try{ history.back(); }catch(e){} }
+  }
+  window.addEventListener("popstate",()=>{
+    pushed=false;
+    if(recKey) stopDictation();
+    state.addOpen=false; state.showAll=false; state.settingsOpen=false; state.openId=null; state.candidates=null;
+    render();
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
